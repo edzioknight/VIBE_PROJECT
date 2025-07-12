@@ -1,0 +1,130 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                    String    @id @default(uuid())
+  email                 String    @unique
+  googleId              String?   @unique @map("google_id")
+  name                  String
+  dateOfBirth           DateTime  @map("date_of_birth")
+  gender                String
+  country               String
+  state                 String?
+  city                  String?
+  bio                   String?
+  profilePhotos         String[]  @map("profile_photos")
+  
+  // Lifestyle Info
+  exercise              String?
+  education             String?
+  job                   String?
+  drinking              String?
+  smoking               String?
+  kids                  String?
+  ethnicity             String?
+  religion              String?
+  
+  // Preferences
+  relationshipType      String?   @map("relationship_type")
+  currentStatus         String?   @map("current_status")
+  sexuality             String?
+  lookingFor            String?   @map("looking_for")
+  preferences           String[]
+  preferredGenders      String[]  @map("preferred_genders")
+  
+  // Personality
+  mbti                  String?
+  interests             String[]
+  
+  // Settings
+  allowSearch           Boolean   @default(false) @map("allow_search")
+  showActivityStatus    Boolean   @default(true) @map("show_activity_status")
+  theme                 String    @default("system")
+  
+  // Subscription
+  isPremium             Boolean   @default(false) @map("is_premium")
+  premiumExpiresAt      DateTime? @map("premium_expires_at")
+  
+  // Status
+  isVerified            Boolean   @default(false) @map("is_verified")
+  isActive              Boolean   @default(true) @map("is_active")
+  onboardingCompleted   Boolean   @default(false) @map("onboarding_completed")
+  lastActive            DateTime  @default(now()) @map("last_active")
+  
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+  
+  // Relations
+  authTokens            AuthToken[]
+  userSessions          UserSession[]
+  
+  @@index([email])
+  @@index([lastActive])
+  @@index([createdAt])
+  @@index([isPremium])
+  @@index([isActive])
+  @@map("users")
+}
+
+model AuthToken {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  tokenHash   String    @map("token_hash")
+  tokenType   String    @map("token_type") // 'refresh' or 'access'
+  expiresAt   DateTime  @map("expires_at")
+  isRevoked   Boolean   @default(false) @map("is_revoked")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  
+  // Relations
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([tokenHash])
+  @@index([expiresAt])
+  @@index([tokenType])
+  @@map("auth_tokens")
+}
+
+model OtpCode {
+  id          String    @id @default(uuid())
+  email       String
+  code        String
+  expiresAt   DateTime  @map("expires_at")
+  isUsed      Boolean   @default(false) @map("is_used")
+  attempts    Int       @default(0)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  
+  @@index([email])
+  @@index([code])
+  @@index([expiresAt])
+  @@map("otp_codes")
+}
+
+model UserSession {
+  id            String    @id @default(uuid())
+  userId        String    @map("user_id")
+  sessionToken  String    @map("session_token")
+  deviceInfo    Json?     @map("device_info")
+  ipAddress     String?   @map("ip_address")
+  userAgent     String?   @map("user_agent")
+  isActive      Boolean   @default(true) @map("is_active")
+  lastActivity  DateTime  @default(now()) @map("last_activity")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  
+  // Relations
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([sessionToken])
+  @@index([lastActivity])
+  @@map("user_sessions")
+}
